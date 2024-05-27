@@ -14,9 +14,17 @@ class Assistant:
         self.transcriber = Transcriber()
         self.calendar = CalendarEvent()
         self.nlp_client = OpenAIClient()
+        self.conversation_mode = False
 
     def handle_command(self):
-        command = self.speech_recognizer.recognize_speech()
+        while not self.conversation_mode:
+            self.conversation_mode = self.speech_recognizer.listen_for_wake_word()
+        command = self.speech_recognizer.recognize_speech() 
+        print(f"Command: {command}")
+
+        if not command:
+            return
+
         if "calendar" in command:
             self.text_to_speech.speak("What event would you like to schedule?")
             event = self.speech_recognizer.recognize_speech()
@@ -36,6 +44,7 @@ class Assistant:
             self.text_to_speech.speak(answer)
         elif "stop" in command:
             self.text_to_speech.speak("Goodbye!")
+            self.conversation_mode = False
         else:
             response = self.nlp_client.ask_openai(command, MODEL_D)
             self.text_to_speech.speak(response)
